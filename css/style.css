@@ -1,0 +1,101 @@
+body {
+	background-position: right bottom;
+	background-attachment: fixed;
+	background-repeat: no-repeat;
+}
+
+@media only screen  and (min-device-width : 800px) and (min-device-height : 600px) and (max-device-width : 1024px) and (max-device-height : 768px) {
+  body {
+	  background-image: url('bg1024x768.jpg');
+	}
+}
+
+@media only screen and (max-device-width : 1024px) and (min-device-height : 769px) and (max-device-height : 1024px) {
+  body {
+	  background-image: url('bg1024x1024.jpg');
+	}
+}
+
+@media only screen and (min-device-width : 1025px) and (max-device-width : 1600px) and (min-device-height : 769px) and (max-device-height : 900px) {
+  body {
+	  background-image: url('bg1600x900.jpg');
+	}
+}
+
+@media only screen and (min-device-width : 1025px) and (max-device-width : 1366px) and (max-device-height : 1366px) {
+  body {
+	  background-image: url('bg1366x1366.jpg');
+	}
+}
+
+@media only screen and (min-device-width : 1025px) and (max-device-width : 1366px) and (min-device-height : 901px) and (max-device-height : 1366px) {
+  body {
+	  background-image: url('bg2048x1536.jpg');
+	}
+}
+
+
+h1 {
+  text-align: center;
+  margin-left: 20px;
+  margin-bottom: 0px;
+  background-color: rgba(255, 255, 255, 0.85)
+}
+
+.block {
+  border: 1px solid black;
+  display: inline-block;
+  float: left;
+  margin-left: 20px;
+  margin-top: 20px;
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+.blockHeading {
+  font-size: medium;
+  margin: 0px;
+  padding: 3px;
+  color: white;
+  background-color: black;
+  padding: 5px;
+  text-align: center;
+}
+
+.mainDiv {
+	margin: auto;
+	display: inline-block;
+}
+
+ul {
+  list-style-type: none;
+  margin: 0px;
+  padding: 0px;
+}
+
+li {
+  border-bottom: 1px solid black;
+  margin: 0px;
+  padding: 3px;
+  font-size: small;
+  cursor: pointer;
+}
+
+p {
+	margin: 0px;
+  padding: 3px;
+  text-indent:1em;
+}
+
+.link {
+	float: left;
+  padding: 3px;
+  margin-left: 20px;
+  margin-top: 20px;
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.85);
+  clear: left;
+}
+
+.units {
+	font-size: small;
+}

@@ -1,0 +1,183 @@
+<html>
+<head><title>Play Sound</title></head>
+<body>
+    <h1>Play Sound</h1>
+     <button id="startButton">Start</button>
+    <button id="stopButton">Stop</button>
+    
+<script type="text/javascript" src="./js/drum_sounds.js"></script>
+<script type="text/javascript" src="./js/drum_patterns.js"></script>
+<script type="text/javascript" src="./js/binary_conversions.js"></script>
+<script>
+    //var audioObject = new Audio();
+    
+    var track = '';
+    var k;
+    for(k = 11025; k--;) {
+    track += String.fromCharCode(Math.sin(k/44100*2*Math.PI*659.26)*127+128);
+    }
+    var base64string = 'UklGRjUrAABXQVZFZm10IBAAAAA\BAAEARKwAAESsAAABAAgAZGF0YREr'+btoa('\0\0'+track);
+
+    //var base64string = drumSounds[1].dataURL;
+    var isPlaying = false;
+    var patternId = 0;
+    var wordsInHeader = 22;
+    var framesPerSecond = 44100;
+
+    var decodedDrumSounds = loadDecodedDrumSounds(drumSounds);
+    
+    //var audioObject = new Audio("data:audio/wav;base64," + base64string);
+    
+    var int16ToBase64Converter = ConstructInt16ToBase64Converter();
+
+    var stuff = int16ToBase64Converter.convert(buildMeasure());
+    
+    //var audioObject = new Audio(drumSounds[1].dataURL);
+    //audioObject.currentTime = 0;
+    var audioObject = new Audio(stuff);
+    
+    audioObject.addEventListener('ended', function() {
+        if (isPlaying){
+            //this.currentTime = 0;
+            this.play();
+        }
+    }, false);
+    //audioObject.play();
+    
+    document.getElementById("stopButton").addEventListener("mousedown",stop,false);   
+    document.getElementById("startButton").addEventListener("mousedown",start,false); 
+
+    function start(event) {
+        isPlaying = true;
+        //audioObject.currentTime = 0; 
+        audioObject.play();
+    }
+    
+    function stop(event) {
+        isPlaying = false;
+        audioObject.pause();
+        audioObject.currentTime = 0;               
+    }
+        
+    function loadDecodedDrumSounds(drumSounds) {
+        var base64ToInt16Converter = ConstructBase64ToInt16Converter();
+
+        // drumSounds is assigned in drum_sounds.js.
+        var decodedDrumSounds = [];
+        for ( var i = 0; i < drumSounds.length; i++ )
+        {
+        decodedDrumSounds.push( new DecodedDrumSound(
+            drumSounds[i].frameOffset,
+            base64ToInt16Converter.convert(drumSounds[i].dataURL) ) );
+        }
+        
+        return decodedDrumSounds;
+    }
+    // Begin Get Sound logic
+    function buildMeasure()
+    {
+        var beatsPerMeasure = getBeatsPerMeasure();
+        var measure = initializeMeasure(beatsPerMeasure);
+        addDrumSoundsToMeasure(measure, beatsPerMeasure);
+        limitVolume(measure);
+        emplaceUInt32(2 * (measure.length - wordsInHeader), 20, measure);
+        return measure;
+    }
+    
+    function getBeatsPerMeasure() {
+        return drumPatterns[patternId].beatsPerMeasure;
+    }
+    
+    function initializeMeasure(beatsPerMeasure) {
+        //var measure = [];//makeHeader();
+        var measure = makeHeader();
+        var indexAfterLastFrame = wordsInHeader + framesPerMeasure(beatsPerMeasure);
+
+        for ( var i = wordsInHeader; i < indexAfterLastFrame; i++ )
+        {
+            measure.push(0);
+        }
+
+        return measure;
+    }
+
+    function makeHeader(measure) {
+        return [ 18770, 17990, 29472, 0, 16727, 17750, 28006, 8308, 16, 0, 1, 1, -21436, 0, 22664, 1, 2, 16, 24932, 24948, 0, 0 ];
+    }
+    
+    function framesPerMeasure(beatsPerMeasure) {
+        return convertBeatToFrame(beatsPerMeasure, framesPerSecond, drumPatterns[patternId].beatsPerMinute);
+    }
+    
+    function convertBeatToFrame(beat, framesPerSecond, beatsPerMinute) {
+        return Math.floor( beat * framesPerSecond * 60.0 / beatsPerMinute );
+    }
+    
+    function addDrumSoundsToMeasure(measure, beatsPerMeasure) {
+        var notes = getNotes(beatsPerMeasure);
+        for ( var i = 0; i < notes.length; i++ ) {
+            mixDrumSoundOnMeasure(notes[i], measure);
+        }
+    }
+
+    function limitVolume(sound) {
+        var maxSoFar = 0;
+
+        for ( var i = wordsInHeader; i < sound.length; i++ ) {
+            maxSoFar = Math.max( maxSoFar, Math.abs(sound[i]) );
+        }
+
+        // No limiting needed.
+        if ( maxSoFar <= 32767 )
+            return;
+
+        var scalingFactor = 32767 / maxSoFar;
+
+        for ( var i = wordsInHeader; i < sound.length; i++ ) {
+            sound[i] *= scalingFactor;
+        }
+    }
+    
+    function getNotes(beatsPerMeasure) {
+        return drumPatterns[patternId].notes;
+    }
+    
+    function mixDrumSoundOnMeasure(id, measure) {
+        var drumSound = drumSoundForRow(id);
+        var offset = drumSound.frameOffset + frameForId(id);
+        var initalMeasureLength = measure.length;
+        for ( var i = wordsInHeader; i < drumSound.data.length; i++ ) {
+            if ( offset + i >= initalMeasureLength )
+                measure[offset + i] = drumSound.data[i];
+            else
+                measure[offset + i] += drumSound.data[i];
+        }
+    }
+    
+    function drumSoundForRow(id) {
+        var fields = id.split("_");
+        return decodedDrumSounds[fields[0]];
+    }
+    
+    function frameForId(id) {
+        var numbers = id.split("_");
+        var number = convertBeatToFrame(
+            fractionalBeat(parseInt(numbers[1]), parseInt(numbers[2]), parseInt(numbers[3])),
+            framesPerSecond,
+            drumPatterns[patternId].beatsPerMinute );
+        return number;
+    }
+
+    function fractionalBeat(beat, note, noteDenominator) {
+        return beat + note / noteDenominator;
+    }
+
+    // End Get Sound logic
+    
+    function DecodedDrumSound(frameOffset,data)  {
+        this.frameOffset = frameOffset;
+        this.data = data;
+    }
+
+</script>
+</body></html>

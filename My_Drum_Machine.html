@@ -1,123 +1,148 @@
 <!DOCTYPE html>
 <!-- saved from url=(0044)http://www.somerby.net/mack/drums/index.html -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta charset="UTF-8">
-<title>My Drum Machine</title>
+<html>
 
-<link rel="stylesheet" type="text/css" href="./css/style.css">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <title>My Drum Machine</title>
 
-<style>
+    <link rel="stylesheet" type="text/css" href="./css/style.css">
 
-#drumPatterns {
-  border-bottom: 2px solid black;
-  width: 160px;
-  min-height: 500px;
-}
-
-.rowLabel {
-  width: 142px;
-  float: left;
-  padding: 5px;
-}
-
-.drumRow {
-  border-bottom: 1px solid black;
-  clear: both;
-  float:left;
-}
-
-.beat {
-  float: left;
-  display: inline;
-  border-left: 1px solid black;
-}
-
-.notInUse {
-  display: none;
-}
-
-.drumSwitch {
-  float:left; 
-  border-top: 1px solid black;
-  border-left: 1px solid black;
-  cursor: pointer;
-}
-
-.eighths>.drumSwitch {
-  width: 23px;
-  height: 15px;
-}
-
-.triplets {
-  clear: left;
-}
-
-.triplets>.drumSwitch {
-  width: 15px;
-  height: 23px;
-}
-
-.pushed {
-  background-color: rgba(0, 0, 0, 0.4);
-}
-
-</style>
+    <style>
+        #drumPatterns {
+            border-bottom: 2px solid black;
+            width: 160px;
+            min-height: 500px;
+        }
+        
+        .rowLabel {
+            width: 142px;
+            float: left;
+            padding: 5px;
+        }
+        
+        .drumRow {
+            border-bottom: 1px solid black;
+            clear: both;
+            float: left;
+        }
+        
+        .beat {
+            float: left;
+            display: inline;
+            border-left: 1px solid black;
+        }
+        
+        .notInUse {
+            display: none;
+        }
+        
+        .drumSwitch {
+            float: left;
+            border-top: 1px solid black;
+            border-left: 1px solid black;
+            cursor: pointer;
+        }
+        
+        .eighths>.drumSwitch {
+            width: 23px;
+            height: 15px;
+        }
+        
+        .triplets {
+            clear: left;
+        }
+        
+        .triplets>.drumSwitch {
+            width: 15px;
+            height: 23px;
+        }
+        
+        .pushed {
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+    </style>
 
 </head>
+
 <body>
 
-<div class="mainDiv">
+    <div class="mainDiv">
 
-<h1>My Drum Machine</h1>
+        <h1>My Drum Machine</h1>
 
-<form id="theForm" onsubmit="return false;">
+        <form id="theForm" onsubmit="return false;">
 
-<div id="drumPad" class="block">
-  <div id="controls" class="blockHeading">
-    <input id="startButton" type="button" value="Start" />
-    <input id="stopButton" type="button" value="Stop" />
-    <input id="clearButton" type="button" value="Clear" />
-    <input id="patternButton" type="button" value="Pattern" />
-    <label for="beatsPerMeasure">Beats per Measure:</label>
-    <select id="beatsPerMeasure">
-      <option selected>4</option>
-      <option>5</option>
-      <option>6</option>
-      <option>7</option>
-      <option>8</option>
-    </select>
-    <label for="tempo">Tempo:</label>
-    <input id="tempo" type="text" value="120" size="3" />
-    <span class="units">BPM</span>
-  </div>
-</div>
+            <div id="drumPad" class="block">
+                <div id="controls" class="blockHeading">
+                    <input id="startButton" type="button" value="Start" />
+                    <input id="stopButton" type="button" value="Stop" />
+                    <input id="clearButton" type="button" value="Clear" />
+                    <input id="patternButton" type="button" value="Pattern" />
+                    <label for="beatsPerMeasure">Beats per Measure:</label>
+                    <select id="beatsPerMeasure">
+                        <option selected>4</option>
+                        <option>5</option>
+                        <option>6</option>
+                        <option>7</option>
+                        <option>8</option>
+                    </select>
+                    <label for="tempo">Tempo:</label>
+                    <input id="tempo" type="text" value="120" size="3" />
+                    <span class="units">BPM</span>
+                </div>
+            </div>
 
-<div id="drumPatterns" class="block">
-  <h2 class="blockHeading">Stored Patterns</h2>
-  <ul id="exampleDrumPatterns">
-  </ul>
-  <h2 class="blockHeading">
+            <div id="drumPatterns" class="block">
+                <h2 class="blockHeading">Stored Patterns</h2>
+                <ul id="exampleDrumPatterns">
+                </ul>
+                <h2 class="blockHeading">
     <input type="text" id="patternNameInput" placeholder="name of pattern" />
     <input type="button" id="saveButton" value="Save" />
     <input type="button" id="deleteButton" value="Delete" />
   </h2>
-  <ul id="savedDrumPatterns">
-  </ul>
-</div>
-<div id="textPattern"></div>
+                <ul id="savedDrumPatterns">
+                </ul>
+            </div>
+            <div id="textPattern"></div>
 
-</form>
+        </form>
 
-</div>
+    </div>
 
-<!-- <a href="javascript:extractPattern();">extract pattern</a> -->
-<script type="text/javascript" src="./js/drum.js"></script>
+    <!-- <a href="javascript:extractPattern();">extract pattern</a> -->
+    <!--<script type="text/javascript" src="./js/drum.js"></script> -->
 
-<script type="text/javascript" src="./js/drum_sounds.js"></script>
-<script type="text/javascript" src="./js/drum_patterns.js"></script>
-<script type="text/javascript" src="./js/binary_conversions.js"></script>
+    <script type="text/javascript" src="./js/drum_sounds.js"></script>
+    <script type="text/javascript" src="./js/drum_patterns.js"></script>
+    <script type="text/javascript" src="./js/binary_conversions.js"></script>
 
-<script>
+    <script>
+        var Drum = function(playing, beatsPerMinute, framesPerSecond, beatsPerMeasure, name) {
+  this.playing = playing;
+  this.beatsPerMinute = beatsPerMinute;
+  this.framesPerSecond = framesPerSecond;
+  this.beatsPerMeasure = beatsPerMeasure;
+  this.name = name;
+}
+
+Drum.prototype.playSound = function(sound) {
+  sound.currentTime = 0;
+  sound.play();
+}
+
+Drum.prototype.setPlaying = function(value) {
+  this.playing = value;
+}
+
+Drum.prototype.stopSound = function(sound)
+{
+  sound.pause();
+  sound.currentTime = 0;
+}
+    
 
 /* 
  * Drum Machine Joy! - an HTML5 drum machine
@@ -273,6 +298,7 @@ function handleDrumButtonPush(event)
     event.target.className = "drumSwitch";
   else
     event.target.className = "pushed drumSwitch";
+  _drum.markPatternChanged()
 }
 
 function generateRowForDrumPad(name,rowIndex)
@@ -773,11 +799,15 @@ function renderPattern(event)
   };
   patternDiv.innerText = JSON.stringify(newPattern);
 }
-  
-</script>
+
+    </script>
 
 
-<script id="hiddenlpsubmitdiv" style="display: none;"></script><script>
-//try{(function() { for(var lastpass_iter=0; lastpass_iter < document.forms.length; lastpass_iter++){ var lastpass_f = document.forms[lastpass_iter]; if(typeof(lastpass_f.lpsubmitorig2)=="undefined"){ lastpass_f.lpsubmitorig2 = lastpass_f.submit; if (typeof(lastpass_f.lpsubmitorig2)=='object'){ continue;}lastpass_f.submit = function(){ var form=this; var customEvent = document.createEvent("Event"); customEvent.initEvent("lpCustomEvent", true, true); var d = document.getElementById("hiddenlpsubmitdiv"); if (d) {for(var i = 0; i < document.forms.length; i++){ if(document.forms[i]==form){ if (typeof(d.innerText) != 'undefined') { d.innerText=i.toString(); } else { d.textContent=i.toString(); } } } d.dispatchEvent(customEvent); }form.lpsubmitorig2(); } } }})()}catch(e){}
+    <script id="hiddenlpsubmitdiv" style="display: none;"></script>
+    <script>
+        //try{(function() { for(var lastpass_iter=0; lastpass_iter < document.forms.length; lastpass_iter++){ var lastpass_f = document.forms[lastpass_iter]; if(typeof(lastpass_f.lpsubmitorig2)=="undefined"){ lastpass_f.lpsubmitorig2 = lastpass_f.submit; if (typeof(lastpass_f.lpsubmitorig2)=='object'){ continue;}lastpass_f.submit = function(){ var form=this; var customEvent = document.createEvent("Event"); customEvent.initEvent("lpCustomEvent", true, true); var d = document.getElementById("hiddenlpsubmitdiv"); if (d) {for(var i = 0; i < document.forms.length; i++){ if(document.forms[i]==form){ if (typeof(d.innerText) != 'undefined') { d.innerText=i.toString(); } else { d.textContent=i.toString(); } } } d.dispatchEvent(customEvent); }form.lpsubmitorig2(); } } }})()}catch(e){}
 
-</script></body></html>
+    </script>
+</body>
+
+</html>

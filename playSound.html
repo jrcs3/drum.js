@@ -15,20 +15,30 @@
     <div id="textPattern"></div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    
+    <script type="text/javascript" src="./js/drum.js"></script>
+    
     <script type="text/javascript" src="./js/drum_sounds.js"></script>
     <script type="text/javascript" src="./js/drum_patterns.js"></script>
     <script type="text/javascript" src="./js/binary_conversions.js"></script>
-    <script type="text/javascript" src="./js/drum.js"></script>
     <script>
-        
+    
+//var x = function() {    
 var patternId = 0;
+
+drumPatterns.unshift(getBlankPattern());
 
 var list = $('#drumPatternSelect')[0]; 
 $.each(drumPatterns, function(index, drumPattern) { 
     list.options[list.options.length] = new Option(drumPattern.name, index);
 }); 
 
-var _drum = new Drum(drumSounds, drumPatterns[patternId]);
+
+//var pattern = drumPatterns[patternId];
+var _drum = new Drum(drumSounds, getPatternFromUI(), getPatternFromUI);
+
+//_drum.changeDrumPattern(pattern);
+_drum.patternChanged = true;
 
 showStats();
 
@@ -37,6 +47,19 @@ document.getElementById("startButton").disabled = false;
 document.getElementById("stopButton").addEventListener("mousedown", stop, false);
 document.getElementById("startButton").addEventListener("mousedown", start, false);
 document.getElementById("drumPatternSelect").addEventListener("change", updateDrumPatternSelect, false);
+
+function getPatternFromUI() {
+    return drumPatterns[patternId];
+}
+
+function getBlankPattern(){
+    return   {
+    name: "Blank Pattern",
+    beatsPerMeasure: 4,
+    beatsPerMinute: 120,
+    notes: []
+  }
+}
 
 function start(event) {
     _drum.start();
@@ -51,23 +74,25 @@ function stop(event) {
 function updateDrumPatternSelect(event) {
     stop();
     patternId = $( "#drumPatternSelect" ).val();
+    _drum.patternChanged = true;
     _drum.changeDrumPattern(drumPatterns[patternId]);
     showStats();
 }
 
 function setEnabled(value) {
-      document.getElementById("stopButton").disabled = !value;
-  document.getElementById("startButton").disabled = value;
-}
-function showStats(){
-    var sb = "";
-    sb +=  "name: <b>" + _drum.name + "</b><br />";
-    sb +=  "beatsPerMinute: <b>" + _drum.beatsPerMinute + "</b><br />";
-    sb +=  "beatsPerMeasure: <b>" + _drum.beatsPerMeasure + "</b><br />";
-    sb +=  "Duration: <b>" + (_drum.getDuration() / 1000) + "</b><br />";
-    $("#textPattern").html(sb);
+    document.getElementById("stopButton").disabled = !value;
+    document.getElementById("startButton").disabled = value;
 }
 
+function showStats(){
+    var sb = "";
+    sb +=  "Name: <b>" + _drum.name + "</b><br />";
+    sb +=  "Beats Per Minute: <b>" + _drum.beatsPerMinute + "</b><br />";
+    sb +=  "Beats Per Measure: <b>" + _drum.beatsPerMeasure + "</b><br />";
+    sb +=  "Duration: <b>" + (_drum.getDuration() / 1000) + "</b> Seconds<br />";
+    $("#textPattern").html(sb);
+}
+//}();
     </script>
 </body>
 

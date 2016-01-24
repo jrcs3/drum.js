@@ -68,84 +68,58 @@
 
 <body>
 
-    <div class="mainDiv">
+<div class="mainDiv">
 
-        <h1>My Drum Machine</h1>
+    <h1>My Drum Machine</h1>
 
-        <form id="theForm" onsubmit="return false;">
-
-            <div id="drumPad" class="block">
-                <div id="controls" class="blockHeading">
-                    <input id="startButton" type="button" value="Start" />
-                    <input id="stopButton" type="button" value="Stop" />
-                    <input id="clearButton" type="button" value="Clear" />
-                    <input id="patternButton" type="button" value="Pattern" />
-                    <label for="beatsPerMeasure">Beats per Measure:</label>
-                    <select id="beatsPerMeasure">
-                        <option selected>4</option>
-                        <option>5</option>
-                        <option>6</option>
-                        <option>7</option>
-                        <option>8</option>
-                    </select>
-                    <label for="tempo">Tempo:</label>
-                    <input id="tempo" type="text" value="120" size="3" />
-                    <span class="units">BPM</span>
-                </div>
+    <form id="theForm" onsubmit="return false;">
+        <label for="patternName">Name:</label>
+        <input type="text" id="patternName" value="Default" />
+        <div id="drumPad" class="block">
+            <div id="controls" class="blockHeading">
+                <input id="startButton" type="button" value="Start" />
+                <input id="stopButton" type="button" value="Stop" />
+                <input id="clearButton" type="button" value="Clear" />
+                <input id="patternButton" type="button" value="Pattern" />
+                <label for="beatsPerMeasure">Beats per Measure:</label>
+                <select id="beatsPerMeasure">
+                    <option selected>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                </select>
+                <label for="tempo">Tempo:</label>
+                <input id="tempo" type="text" value="120" size="3" />
+                <span class="units">BPM</span>
             </div>
+        </div>
 
-            <div id="drumPatterns" class="block">
-                <h2 class="blockHeading">Stored Patterns</h2>
-                <ul id="exampleDrumPatterns">
-                </ul>
-                <h2 class="blockHeading">
-    <input type="text" id="patternNameInput" placeholder="name of pattern" />
-    <input type="button" id="saveButton" value="Save" />
-    <input type="button" id="deleteButton" value="Delete" />
-  </h2>
-                <ul id="savedDrumPatterns">
-                </ul>
-            </div>
-            <div id="textPattern"></div>
+        <div id="drumPatterns" class="block">
+            <h2 class="blockHeading">Stored Patterns</h2>
+            <ul id="exampleDrumPatterns"></ul>
+            <h2 class="blockHeading">
+                <input type="text" id="patternNameInput" placeholder="name of pattern" />
+                <input type="button" id="saveButton" value="Save" />
+                <input type="button" id="deleteButton" value="Delete" />
+            </h2>
+            <ul id="savedDrumPatterns"></ul>
+        </div>
+        <div id="textPattern"></div>
 
-        </form>
+    </form>
 
-    </div>
+</div>
+<!-- <a href="javascript:extractPattern();">extract pattern</a> -->
+<script type="text/javascript" src="./js/drum.js"></script>
 
-    <!-- <a href="javascript:extractPattern();">extract pattern</a> -->
-    <!--<script type="text/javascript" src="./js/drum.js"></script> -->
+<script type="text/javascript" src="./js/drum_sounds.js"></script>
+<script type="text/javascript" src="./js/drum_patterns.js"></script>
+<script type="text/javascript" src="./js/binary_conversions.js"></script>
 
-    <script type="text/javascript" src="./js/drum_sounds.js"></script>
-    <script type="text/javascript" src="./js/drum_patterns.js"></script>
-    <script type="text/javascript" src="./js/binary_conversions.js"></script>
-
-    <script>
-        var Drum = function(playing, beatsPerMinute, framesPerSecond, beatsPerMeasure, name) {
-  this.playing = playing;
-  this.beatsPerMinute = beatsPerMinute;
-  this.framesPerSecond = framesPerSecond;
-  this.beatsPerMeasure = beatsPerMeasure;
-  this.name = name;
-}
-
-Drum.prototype.playSound = function(sound) {
-  sound.currentTime = 0;
-  sound.play();
-}
-
-Drum.prototype.setPlaying = function(value) {
-  this.playing = value;
-}
-
-Drum.prototype.stopSound = function(sound)
-{
-  sound.pause();
-  sound.currentTime = 0;
-}
-    
-
+<script>
 /* 
- * Drum Machine Joy! - an HTML5 drum machine
+ * Drum2 Machine Joy! - an HTML5 drum machine
  * Copyright (C) 2012 MacKenzie Cumings <mackenzie.cumings art gmail dort crom>
  *
  * This program is free software; you can redistribute it and/or
@@ -165,14 +139,16 @@ var beatsPerMinute = 120;
 var framesPerSecond = 44100;
 var beatsPerMeasure = 4;
 var name = "default";
+var patternId = 0;
 
-var _drum = new Drum(playing, beatsPerMinute, framesPerSecond, beatsPerMeasure, name);
+var _beatsPerMeasure = beatsPerMeasure;
+var _beatsPerMinute = beatsPerMinute;
+
+var _drum = new Drum(drumSounds, getPatternFromUI(), getPatternFromUI);
 
 document.getElementById("theForm").reset();
-setPlaying(false);
+setEnabled(false);
 
-//var audioObjects = [ new Audio(), new Audio(), new Audio(), new Audio() ];
-var audioObjects = [ new Audio() ];
 
 var nextTime;
 var nextEnschedulement = null;
@@ -180,589 +156,340 @@ var nextPlay = null;
 
 var wordsInHeader = 22;
 
-// Converter constructors are defined in binary_conversions.js.
-var base64ToInt16Converter = ConstructBase64ToInt16Converter();
-var int16ToBase64Converter = ConstructInt16ToBase64Converter();
+function initializeDrumPatternList(drumPatterns) {
+    var drumPatternList = document.getElementById("exampleDrumPatterns");
 
-// drumSounds is assigned in drum_sounds.js.
-var decodedDrumSounds = [];
-for ( var i = 0; i < drumSounds.length; i++ )
-{
-  decodedDrumSounds.push( new DecodedDrumSound(
-    drumSounds[i].frameOffset,
-    base64ToInt16Converter.convert(drumSounds[i].dataURL) ) );
+    for (var i = 0; i < drumPatterns.length; i++) {
+        drumPatternList.appendChild(generateListItemForDrumPattern(drumPatterns[i]));
+    }
 }
 
-var currentMeasure = 0;
-function setNextMeasure()
-{
-  currentMeasure = ( currentMeasure + 1 ) % audioObjects.length;
-  audioObjects[currentMeasure].src = int16ToBase64Converter.convert(buildMeasure());
+function parseDrumPatterns(aString) {
+    var fields = aString.split(";\n");
+    var patterns = [];
+    for (var i = 0; i < fields.length; i++) {
+        patterns.push(parseDrumPattern(fields[i]));
+    }
+    return patterns;
 }
 
-function initializeDrumPatternList(drumPatterns)
-{
-  var drumPatternList = document.getElementById("exampleDrumPatterns");
-  
-  for ( var i = 0; i < drumPatterns.length; i++ )
-  {
-    drumPatternList.appendChild(generateListItemForDrumPattern(drumPatterns[i]));
-  }
+function parseDrumPattern(aString) {
+    var fields = aString.split(",\n");
+
+    var notes = [];
+    for (var i = 3; i < fields.length; i++) {
+        notes.push(fields[i]);
+    }
+
+    return {
+        name: fields[0],
+        beatsPerMeasure: fields[1],
+        beatsPerMinute: fields[2],
+        notes: notes
+    }
 }
 
-function convertDrumPatternToString(drumPattern)
-{
-  return [ drumPattern.name, drumPattern.beatsPerMeasure, _drum.beatsPerMinute ].concat(drumPattern.notes).join(",\n");
+function initializeUsersDrumPatternList() {
+    if (typeof (Storage) == "undefined" || !localStorage.drumPatterns)
+        return;
+
+    var drumPatternList = document.getElementById("savedDrumPatterns");
+
+    var patterns = parseDrumPatterns(localStorage.drumPatterns);
+    for (var i = 0; i < patterns.length; i++) {
+        if (patterns[i].name && patterns[i].beatsPerMeasure && patterns[i].beatsPerMinute && patterns[i].notes)
+            drumPatternList.appendChild(generateListItemForDrumPattern(patterns[i]));
+    }
 }
 
-function convertDrumPatternsToString(drumPatterns)
-{
-  var strings = [];
-  for ( var i = 0; i < drumPatterns.length; i++ )
-  {
-    strings.push(convertDrumPatternToString(drumPatterns[i]));
-  }
-  return strings.join(";\n");
+function generateListItemForDrumPattern(drumPattern) {
+    var listItem = document.createElement("li");
+
+    listItem.appendChild(document.createTextNode(drumPattern.name));
+    listItem.addEventListener("click", function (event) { loadPattern(drumPattern); }, false);
+
+    return listItem;
 }
 
-function parseDrumPatterns(aString)
-{
-  var fields = aString.split( ";\n" );
-  var patterns = [];
-  for ( var i = 0; i < fields.length; i++ )
-  {
-    patterns.push(parseDrumPattern(fields[i]));
-  }
-  return patterns;
+function loadPattern(drumPattern) {
+    setBeatsPerMeasure(drumPattern.beatsPerMeasure);
+    setTempo(drumPattern.beatsPerMinute);
+    setNotes(drumPattern.notes);
+    setName(drumPattern.name);
+    _drum.changeDrumPattern(getPatternFromUI());
 }
 
-function parseDrumPattern(aString)
-{
-  var fields = aString.split(",\n");
-  
-  var notes = [];
-  for ( var i = 3; i < fields.length; i++ )
-  {
-    notes.push(fields[i]);
-  }
-  
-  return {
-    name: fields[0],
-    beatsPerMeasure: fields[1],
-    beatsPerMinute: fields[2],
-    notes: notes
-  }
+function setName(name){
+    document.getElementById("patternName").value = name;
 }
 
-function initializeUsersDrumPatternList()
-{
-  if( typeof(Storage) == "undefined" || !localStorage.drumPatterns )
-    return;
-  
-  var drumPatternList = document.getElementById("savedDrumPatterns");
-  
-  var patterns = parseDrumPatterns(localStorage.drumPatterns);
-  for ( var i = 0; i < patterns.length; i++ )
-  {
-    if ( patterns[i].name && patterns[i].beatsPerMeasure && patterns[i].beatsPerMinute && patterns[i].notes )
-      drumPatternList.appendChild(generateListItemForDrumPattern(patterns[i]));
-  }
+function setTempo(beatsPerMinute) {
+    document.getElementById("tempo").value = beatsPerMinute;
+    updateTempo();
 }
 
-function generateListItemForDrumPattern(drumPattern)
-{
-  var listItem = document.createElement("li");
-  
-  listItem.appendChild(document.createTextNode(drumPattern.name));
-  listItem.addEventListener("click",function(event){loadPattern(drumPattern);},false);
-  
-  return listItem;
-}
-
-function loadPattern(drumPattern)
-{
-  setBeatsPerMeasure(drumPattern.beatsPerMeasure);
-  setTempo(drumPattern.beatsPerMinute);
-  setNotes(drumPattern.notes);
-}
-
-function setTempo(beatsPerMinute)
-{
-  document.getElementById("tempo").value = beatsPerMinute;
-  updateTempo();
-}
-
-function handleDrumButtonPush(event)
-{
-  if (event.target.className.indexOf("pushed") >= 0)
-    event.target.className = "drumSwitch";
-  else
-    event.target.className = "pushed drumSwitch";
-  _drum.markPatternChanged()
-}
-
-function generateRowForDrumPad(name,rowIndex)
-{
-  var row = document.createElement("div");
-  row.id = "row" + rowIndex;
-  row.className = "drumRow";
-  
-  row.appendChild(generateRowLabel(name));
-  
-  for ( var i = 0; i < 8; i++ )
-  {
-    row.appendChild(generateBeatForRow( rowIndex, i, i<4 ));
-  }
-  
-  return row;
-}
-
-function generateRowLabel(name)
-{
-  var label = document.createElement("div");
-  
-  label.className = "rowLabel";
-  label.appendChild(document.createTextNode(name));
-  
-  return label;
-}
-
-function generateBeatForRow(rowIndex,beatIndex,inUse)
-{
-  var beat = document.createElement("div");
-  beat.id = [rowIndex,beatIndex].join("_");
-  beat.className = "beat";
-  if ( !inUse )
-    beat.className += " notInUse";
-  
-  beat.appendChild(generateButtonsForEighths(rowIndex,beatIndex));
-  beat.appendChild(generateButtonsForTriplets(rowIndex,beatIndex));
-  
-  return beat;
-}
-
-function generateButtonsForEighths(rowIndex,beatIndex)
-{
-  var eighths = document.createElement("div");
-  eighths.className = "eighths";
-  
-  for ( var i = 0; i < 4; i++ )
-  {
-    eighths.appendChild(generateDrumSwitch(rowIndex,beatIndex,i,4));
-  }
-  
-  return eighths;
-}
-
-function generateButtonsForTriplets(rowIndex,beatIndex)
-{
-  var triplets = document.createElement("div");
-  triplets.className = "triplets";
-  
-  for ( var i = 0; i < 6; i++ )
-  {
-    triplets.appendChild(generateDrumSwitch(rowIndex,beatIndex,i,6));
-  }
-  
-  return triplets;
-}
-
-function generateDrumSwitch(rowIndex,beatIndex,subBeatIndex,subdivision)
-{
-  var drumButton = document.createElement("div");
-  
-  drumButton.id = [rowIndex,beatIndex,subBeatIndex,subdivision].join("_");
-  drumButton.className = "drumSwitch";
-  drumButton.onmousedown = handleDrumButtonPush;
-  
-  return drumButton;
-}
-
-function initializeDrumPad(drumSounds)
-{
-  var drumPad = document.getElementById("drumPad");
-  
-  for ( var i = 0; i < drumSounds.length; i++ )
-  {
-    drumPad.appendChild(generateRowForDrumPad(drumSounds[i].name,i));
-  }
-}
-
-function getBeatsPerMeasure()
-{
-  var beatsPerMeasure = document.getElementById("beatsPerMeasure").selectedIndex + 4.0;
-  _drum.beatsPerMeasure = beatsPerMeasure;
-  return beatsPerMeasure;
-}
-
-function setBeatsPerMeasure(beatsPerMeasure)
-{
-  document.getElementById("beatsPerMeasure").selectedIndex = beatsPerMeasure - 4;
-  updateNumberOfBeatsShown();
-  _drum.beatsPerMeasure = beatsPerMeasure;
-}
-
-function DecodedDrumSound(frameOffset,data)
-{
-  this.frameOffset = frameOffset;
-  this.data = data;
-}
-
-function convertBeatToFrame(beat,framesPerSecond,beatsPerMinute)
-{
-  return Math.floor( beat * framesPerSecond * 60.0 / beatsPerMinute );
-}
-
-function fractionalBeat(beat,note,noteDenominator)
-{
-  return beat + note / noteDenominator;
-}
-
-function frameForId(id)
-{
-  var numbers = id.split("_");
-  var number = convertBeatToFrame(
-    fractionalBeat(parseInt(numbers[1]),parseInt(numbers[2]),parseInt(numbers[3])),
-    _drum.framesPerSecond,
-    _drum.beatsPerMinute );
-  return number;
-}
-
-function framesPerMeasure(beatsPerMeasure)
-{
-  return convertBeatToFrame(beatsPerMeasure,_drum.framesPerSecond,_drum.beatsPerMinute);
-}
-
-function drumSoundForRow(id)
-{
-  var fields = id.split("_");
-  return decodedDrumSounds[fields[0]];
-}
-
-function mixDrumSoundOnMeasure(id,measure)
-{
-  var drumSound = drumSoundForRow(id);
-  var offset = drumSound.frameOffset + frameForId(id);
-  var initalMeasureLength = measure.length;
-  for ( var i = wordsInHeader; i < drumSound.data.length; i++ )
-  {
-    if ( offset + i >= initalMeasureLength )
-      measure[offset+i] = drumSound.data[i];
+function handleDrumButtonPush(event) {
+    if (event.target.className.indexOf("pushed") >= 0)
+        event.target.className = "drumSwitch";
     else
-      measure[offset+i] += drumSound.data[i];
-  }
+        event.target.className = "pushed drumSwitch";
+    _drum.markPatternChanged()
 }
 
-function initializeMeasure(beatsPerMeasure)
-{
-  var measure = makeHeader();
-  var indexAfterLastFrame = wordsInHeader + framesPerMeasure(beatsPerMeasure);
+function generateRowForDrumPad(name, rowIndex) {
+    var row = document.createElement("div");
+    row.id = "row" + rowIndex;
+    row.className = "drumRow";
 
-  for ( var i = wordsInHeader; i < indexAfterLastFrame; i++ )
-  {
-    measure.push(0);
-  }
+    row.appendChild(generateRowLabel(name));
 
-  return measure;
-}
-
-function makeHeader(measure)
-{
-  return [ 18770, 17990, 29472, 0, 16727, 17750, 28006, 8308, 16, 0, 1, 1, -21436, 0, 22664, 1, 2, 16, 24932, 24948, 0, 0 ];
-}
-
-function setNotes(notes)
-{
-  var divs = document.getElementsByTagName("div");
-  
-  for ( var i = 0; i < divs.length; i++ )
-  {
-    if ( divs[i].className == "pushed drumSwitch" )
-      divs[i].className = "drumSwitch";
-  }
-  
-  for ( var i = 0; i < notes.length; i++ )
-  {
-    document.getElementById(notes[i]).className = "pushed drumSwitch";
-  }
-}
-
-function getNotes(beatsPerMeasure)
-{
-  var divs = document.getElementsByTagName("div");
-  var notes = [];
-  
-  for ( var i = 0; i < divs.length; i++ )
-  {
-    if ( divs[i].className == "pushed drumSwitch" )
-    {
-      if ( divs[i].id.split("_")[1] < beatsPerMeasure )
-        notes.push(divs[i].id);
+    for (var i = 0; i < 8; i++) {
+        row.appendChild(generateBeatForRow(rowIndex, i, i < 4));
     }
-  }
-  return notes;
+
+    return row;
 }
 
-function addDrumSoundsToMeasure(measure,beatsPerMeasure)
-{
-  var notes = getNotes(beatsPerMeasure);
-  for ( var i = 0; i < notes.length; i++ )
-  {
-    mixDrumSoundOnMeasure(notes[i],measure);
-  }
+function generateRowLabel(name) {
+    var label = document.createElement("div");
+
+    label.className = "rowLabel";
+    label.appendChild(document.createTextNode(name));
+
+    return label;
 }
 
-function limitVolume(sound)
-{
-  var maxSoFar = 0;
-  
-  for ( var i = wordsInHeader; i < sound.length; i++ )
-  {
-    maxSoFar = Math.max( maxSoFar, Math.abs(sound[i]) );
-  }
-  
-  // No limiting needed.
-  if ( maxSoFar <= 32767 )
-    return;
-  
-  var scalingFactor = 32767 / maxSoFar;
-  
-  for ( var i = wordsInHeader; i < sound.length; i++ )
-  {
-    sound[i] *= scalingFactor;
-  }
+function generateBeatForRow(rowIndex, beatIndex, inUse) {
+    var beat = document.createElement("div");
+    beat.id = [rowIndex, beatIndex].join("_");
+    beat.className = "beat";
+    if (!inUse)
+        beat.className += " notInUse";
+
+    beat.appendChild(generateButtonsForEighths(rowIndex, beatIndex));
+    beat.appendChild(generateButtonsForTriplets(rowIndex, beatIndex));
+
+    return beat;
 }
 
-function buildMeasure()
-{
-  var beatsPerMeasure = getBeatsPerMeasure();
-  var measure = initializeMeasure(beatsPerMeasure);
-  addDrumSoundsToMeasure(measure,beatsPerMeasure);
-  limitVolume(measure);
-  emplaceUInt32(2*(measure.length - wordsInHeader),20,measure);
-  return measure;
-}
+function generateButtonsForEighths(rowIndex, beatIndex) {
+    var eighths = document.createElement("div");
+    eighths.className = "eighths";
 
-function playNextMeasure()
-{
-  _drum.playSound(audioObjects[currentMeasure]);
-  //playSound(audioObjects[currentMeasure]);
-  
-}
-  
-function now()
-{
-  return (new Date()).getTime();
-}
-
-function millisecondsPerBeat()
-{
-  return 60000.0 / _drum.beatsPerMinute;
-}
-
-//function stopSound(sound)
-//{
-//  sound.pause();
-//  sound.currentTime = 0;
-//}
-
-function setPlaying(value)
-{
-  //_drum.playing = value;
-  _drum.setPlaying(value);
-  document.getElementById("stopButton").disabled = !value;
-  document.getElementById("startButton").disabled = value;
-}
-
-function stop(event)
-{
-  setPlaying(false);
-
-  if ( nextPlay )
-  {
-    clearInterval(nextPlay);
-    nextPlay = null;
-  }
-  
-  if ( nextEnschedulement )
-  {
-    clearInterval(nextEnschedulement);
-    nextEnschedulement = null;
-  }
-  
-  for ( var i = 0; i < audioObjects.length; i++ )
-  {
-    _drum.stopSound(audioObjects[i]);
-  }
-}
-
-function start(event)
-{
-  setPlaying(true);
-  
-  nextTime = now() + 500;
-  scheduleNextMeasure();
-}
-
-function scheduleNextMeasure()
-{
-  if (!_drum.playing)
-    return;
-
-  updateTempo();
-  var step = millisecondsPerBeat();
-  var beatsPerMeasure = getBeatsPerMeasure();
-
-  var startOfNextMeasure = nextTime - now(); 
-  nextPlay = setTimeout( playNextMeasure, startOfNextMeasure );
-  nextEnschedulement = setTimeout(scheduleNextMeasure, startOfNextMeasure + (beatsPerMeasure - 0.6) * step);
-  setTimeout( setNextMeasure, startOfNextMeasure - 500 );
-  
-  nextTime += step * beatsPerMeasure;
-}
-
-//function playSound(sound)
-//{
-//  //sound.currentTime = 0;
-//  sound.play();
-//}
-  
-function updateNumberOfBeatsShown(event)
-{
-  var beatsPerMeasure = getBeatsPerMeasure();
-  
-  var divs = document.getElementsByTagName("div");
-  
-  for ( var i = 0; i < divs.length; i++ )
-  {
-    if ( divs[i].className.indexOf( "beat" ) >= 0 )
-    {
-      if ( divs[i].id.split("_")[1] < beatsPerMeasure )
-        divs[i].className = "beat";
-      else
-        divs[i].className = "beat notInUse";
+    for (var i = 0; i < 4; i++) {
+        eighths.appendChild(generateDrumSwitch(rowIndex, beatIndex, i, 4));
     }
-  }
+
+    return eighths;
 }
 
-function isValidTempo(tempoAsNumber)
-{
-  return !isNaN(tempoAsNumber) && tempoAsNumber >= 30 && tempoAsNumber <= 240;
+function generateButtonsForTriplets(rowIndex, beatIndex) {
+    var triplets = document.createElement("div");
+    triplets.className = "triplets";
+
+    for (var i = 0; i < 6; i++) {
+        triplets.appendChild(generateDrumSwitch(rowIndex, beatIndex, i, 6));
+    }
+
+    return triplets;
 }
 
-function updateTempo(event)
-{
-  var newTempo = parseFloat(document.getElementById("tempo").value);
-  
-  if ( isValidTempo(newTempo) )
-    _drum.beatsPerMinute = newTempo;
+function generateDrumSwitch(rowIndex, beatIndex, subBeatIndex, subdivision) {
+    var drumButton = document.createElement("div");
+
+    drumButton.id = [rowIndex, beatIndex, subBeatIndex, subdivision].join("_");
+    drumButton.className = "drumSwitch";
+    drumButton.onmousedown = handleDrumButtonPush;
+
+    return drumButton;
 }
 
-function checkTempo(event)
-{
-  var newTempo = parseFloat(document.getElementById("tempo").value);
-  
-  if ( !isValidTempo(newTempo) )
-    document.getElementById("tempo").value = _drum.beatsPerMinute;
+function initializeDrumPad(drumSounds) {
+    var drumPad = document.getElementById("drumPad");
+
+    for (var i = 0; i < drumSounds.length; i++) {
+        drumPad.appendChild(generateRowForDrumPad(drumSounds[i].name, i));
+    }
 }
 
-function extractPattern()
-{
-  var newNode = document.createElement("div");
-  var text = "";
-  
-  text += getBeatsPerMeasure().toString() + "," + _drum.beatsPerMinute.toString() + ',["';
-  
-  text += getNotes(getBeatsPerMeasure()).join('","');
-  
-  text += '"]';
-  
-  newNode.appendChild(document.createTextNode(text));
-  
-  document.body.appendChild(newNode);
+function getBeatsPerMeasure() {
+    var beatsPerMeasure = document.getElementById("beatsPerMeasure").selectedIndex + 4.0;
+    _beatsPerMeasure = beatsPerMeasure;
+    return beatsPerMeasure;
 }
 
-function constructPattern(patternName)
-{
-  return {
-    name: patternName,
-    beatsPerMeasure: getBeatsPerMeasure(),
-    beatsPerMinute: _drum.beatsPerMinute,
-    notes: getNotes(getBeatsPerMeasure()) };
+function getTempo() {
+    var newTempo = parseFloat(document.getElementById("tempo").value);
+
+    if (isValidTempo(newTempo))
+        _beatsPerMinute = newTempo;
+        
+    return newTempo;
 }
 
-function clearPattern(event)
-{
-  var divs = document.getElementsByTagName("div");
-  
-  for ( var i = 0; i < divs.length; i++ )
-  {
-    if ( divs[i].className == "pushed drumSwitch" )
-      divs[i].className = "drumSwitch";
-  }
+function getPatternName() {
+    var patternName = document.getElementById("patternName").value;
+    return patternName;
 }
 
-function savePattern(event)
-{
-  if( typeof(Storage) == "undefined" )
-    return;
-
-  var patternName = trim(document.getElementById("patternNameInput").value);
-  
-  if ( patternName.length == 0 )
-    return;
-  
-  var pattern = constructPattern(patternName);
-  var patternString = convertDrumPatternToString(pattern);
-  
-  if ( !localStorage.drumPatterns )
-    localStorage.drumPatterns = patternString;
-  else
-    localStorage.drumPatterns += ";\n" + patternString;
-  
-  
-  document.getElementById("savedDrumPatterns").appendChild(generateListItemForDrumPattern(pattern));
+function setBeatsPerMeasure(beatsPerMeasure) {
+    document.getElementById("beatsPerMeasure").selectedIndex = beatsPerMeasure - 4;
+    updateNumberOfBeatsShown();
+    _beatsPerMeasure = beatsPerMeasure;
 }
 
-function trim(aString)
-{
-  return aString.replace( /^\s+/, "" ).replace( /\s+$/, "" );
+function DecodedDrumSound(frameOffset, data) {
+    this.frameOffset = frameOffset;
+    this.data = data;
+}
+function setNotes(notes) {
+    var divs = document.getElementsByTagName("div");
+
+    for (var i = 0; i < divs.length; i++) {
+        if (divs[i].className == "pushed drumSwitch")
+            divs[i].className = "drumSwitch";
+    }
+
+    for (var i = 0; i < notes.length; i++) {
+        document.getElementById(notes[i]).className = "pushed drumSwitch";
+    }
 }
 
-function deletePattern(event)
-{
-  if( typeof(Storage) == "undefined" || !localStorage.drumPatterns )
-    return;
+function getNotes(beatsPerMeasure) {
+    var divs = document.getElementsByTagName("div");
+    var notes = [];
 
-  var patternName = trim(document.getElementById("patternNameInput").value);
+    for (var i = 0; i < divs.length; i++) {
+        if (divs[i].className == "pushed drumSwitch") {
+            if (divs[i].id.split("_")[1] < beatsPerMeasure)
+                notes.push(divs[i].id);
+        }
+    }
+    return notes;
+}
+
+function setEnabled(value) {
+    document.getElementById("stopButton").disabled = !value;
+    document.getElementById("startButton").disabled = value;
+}
+
+function start(event) {
+    _drum.start();
+    setEnabled(true);
+}
+
+function stop(event) {
+    _drum.stop();
+    setEnabled(false);
+}
   
-  if ( patternName.length == 0 )
-    return;
-  
-  var patternPattern = new RegExp( "^" + patternName + ",\n" );
-  
-  var storedPatterns = localStorage.drumPatterns.split( ";\n" );
-  var nextStoredPatterns = [];
-  
-  for ( var i = 0; i < storedPatterns.length; i++ )
-  {
-    if ( !storedPatterns[i].match( patternPattern ) )
-      nextStoredPatterns.push( storedPatterns[i] );
-  }
-  
-  if ( nextStoredPatterns.length == 0 )
-    delete localStorage.drumPatterns;
-  else
-    localStorage.drumPatterns = nextStoredPatterns.join(";\n");
-  
-  var patternList = document.getElementById("savedDrumPatterns");
-  var children = patternList.childNodes;
-  
-  for ( var i = 0; i < children.length; i++ )
-  {
-    if ( children[i].innerHTML == patternName )
-      patternList.removeChild(children[i]);
-  }
+function updateNumberOfBeatsShown(event) {
+    var beatsPerMeasure = getBeatsPerMeasure();
+
+    var divs = document.getElementsByTagName("div");
+
+    for (var i = 0; i < divs.length; i++) {
+        if (divs[i].className.indexOf("beat") >= 0) {
+            if (divs[i].id.split("_")[1] < beatsPerMeasure)
+                divs[i].className = "beat";
+            else
+                divs[i].className = "beat notInUse";
+        }
+    }
+}
+
+function isValidTempo(tempoAsNumber) {
+    return !isNaN(tempoAsNumber) && tempoAsNumber >= 30 && tempoAsNumber <= 240;
+}
+
+function updateTempo(event) {
+    var newTempo = parseFloat(document.getElementById("tempo").value);
+
+    if (isValidTempo(newTempo))
+        _beatsPerMinute = newTempo;
+}
+
+function checkTempo(event) {
+    var newTempo = parseFloat(document.getElementById("tempo").value);
+
+    if (!isValidTempo(newTempo))
+        document.getElementById("tempo").value = _beatsPerMinute;
+}
+
+function constructPattern(patternName) {
+    return {
+        name: patternName,
+        beatsPerMeasure: getBeatsPerMeasure(),
+        beatsPerMinute: _beatsPerMinute,
+        notes: getNotes(getBeatsPerMeasure()) 
+    };
+}
+
+function clearPattern(event) {
+    var divs = document.getElementsByTagName("div");
+
+    for (var i = 0; i < divs.length; i++) {
+        if (divs[i].className == "pushed drumSwitch")
+            divs[i].className = "drumSwitch";
+    }
+}
+
+function savePattern(event) {
+    if (typeof (Storage) == "undefined")
+        return;
+
+    var patternName = trim(document.getElementById("patternNameInput").value);
+
+    if (patternName.length == 0)
+        return;
+
+    var pattern = constructPattern(patternName);
+    var patternString = convertDrumPatternToString(pattern);
+
+    if (!localStorage.drumPatterns)
+        localStorage.drumPatterns = patternString;
+    else
+        localStorage.drumPatterns += ";\n" + patternString;
+
+
+    document.getElementById("savedDrumPatterns").appendChild(generateListItemForDrumPattern(pattern));
+}
+
+function trim(aString) {
+    return aString.replace(/^\s+/, "").replace(/\s+$/, "");
+}
+
+function deletePattern(event) {
+    if (typeof (Storage) == "undefined" || !localStorage.drumPatterns)
+        return;
+
+    var patternName = trim(document.getElementById("patternNameInput").value);
+
+    if (patternName.length == 0)
+        return;
+
+    var patternPattern = new RegExp("^" + patternName + ",\n");
+
+    var storedPatterns = localStorage.drumPatterns.split(";\n");
+    var nextStoredPatterns = [];
+
+    for (var i = 0; i < storedPatterns.length; i++) {
+        if (!storedPatterns[i].match(patternPattern))
+            nextStoredPatterns.push(storedPatterns[i]);
+    }
+
+    if (nextStoredPatterns.length == 0)
+        delete localStorage.drumPatterns;
+    else
+        localStorage.drumPatterns = nextStoredPatterns.join(";\n");
+
+    var patternList = document.getElementById("savedDrumPatterns");
+    var children = patternList.childNodes;
+
+    for (var i = 0; i < children.length; i++) {
+        if (children[i].innerHTML == patternName)
+            patternList.removeChild(children[i]);
+    }
 }
 
 // Build the rest of the page...
@@ -783,31 +510,29 @@ document.getElementById("tempo").addEventListener("blur",checkTempo,false);
 document.getElementById("saveButton").addEventListener("click",savePattern,false);
 document.getElementById("deleteButton").addEventListener("click",deletePattern,false);
 
-
-
 // My functions:
 
-function renderPattern(event)
-{
-  var patternDiv = document.getElementById("textPattern");
-  
-  var newPattern = {
-      name: _drum.name,
-      beatsPerMeasure: _drum.beatsPerMeasure,
-      beatsPerMinute: _drum,beatsPerMinute,
-      notes: getNotes(_drum.beatsPerMeasure)
-  };
-  patternDiv.innerText = JSON.stringify(newPattern);
+function renderPattern(event) {
+    var newPattern = getPatternFromUI();
+    var patternDiv = document.getElementById("textPattern");
+    patternDiv.innerText = JSON.stringify(newPattern);
+}
+
+function getPatternFromUI() {
+    var tempo = getTempo();
+    var name = getPatternName();
+    var newPattern = {
+        name: name,
+        beatsPerMeasure: getBeatsPerMeasure(),
+        beatsPerMinute: tempo,
+        notes: getNotes(tempo)
+    };
+    return newPattern;
 }
 
     </script>
 
-
     <script id="hiddenlpsubmitdiv" style="display: none;"></script>
-    <script>
-        //try{(function() { for(var lastpass_iter=0; lastpass_iter < document.forms.length; lastpass_iter++){ var lastpass_f = document.forms[lastpass_iter]; if(typeof(lastpass_f.lpsubmitorig2)=="undefined"){ lastpass_f.lpsubmitorig2 = lastpass_f.submit; if (typeof(lastpass_f.lpsubmitorig2)=='object'){ continue;}lastpass_f.submit = function(){ var form=this; var customEvent = document.createEvent("Event"); customEvent.initEvent("lpCustomEvent", true, true); var d = document.getElementById("hiddenlpsubmitdiv"); if (d) {for(var i = 0; i < document.forms.length; i++){ if(document.forms[i]==form){ if (typeof(d.innerText) != 'undefined') { d.innerText=i.toString(); } else { d.textContent=i.toString(); } } } d.dispatchEvent(customEvent); }form.lpsubmitorig2(); } } }})()}catch(e){}
-
-    </script>
 </body>
 
 </html>

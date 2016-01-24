@@ -108,7 +108,10 @@ function ConstructBase64ToInt16Converter()
     },
     3,
     4,
-    function(datum) { return convertToInt16(byteSwap(datum)); } );
+    function(datum) { 
+        return convertToInt16(byteSwap(datum)); 
+    }
+  );
   
   converter.convert = function(base64String)
   {

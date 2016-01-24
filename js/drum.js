@@ -4,50 +4,52 @@
 // Issue: This must be a singleton until I find a better work around.
 var drumThis;
 
-var Drum = function (drumSounds, drumPattern) {
-    this.decodedDrumSounds = this.loadDecodedDrumSounds(drumSounds);
-    this.playing = false;
-    this.beatsPerMinute = drumPattern.beatsPerMinute;
-    this.framesPerSecond = 44100;
-    this.beatsPerMeasure = drumPattern.beatsPerMeasure;
-    this.name = drumPattern.name;
-    this.notes = drumPattern.notes;
-    this.wordsInHeader = 22;
-
-    this.int16ToBase64Converter = ConstructInt16ToBase64Converter();
-
-    this.soundSrc = this.int16ToBase64Converter.convert(this.buildMeasure());
-    this.player1 = new Audio(this.soundSrc);
-    this.player2 = new Audio(this.soundSrc);
-    this.audioObject = this.player1;
-    this.currentPlayer = 1;
-    
-    this.patternChanged = false;
-    
+var Drum = function (drumSounds, drumPattern, getPatternFromUI) {
     drumThis = this;
+
+    drumThis.decodedDrumSounds = drumThis.loadDecodedDrumSounds(drumSounds);
+    drumThis.playing = false;
+    drumThis.beatsPerMinute = drumPattern.beatsPerMinute;
+    drumThis.framesPerSecond = 44100;
+    drumThis.beatsPerMeasure = drumPattern.beatsPerMeasure;
+    drumThis.name = drumPattern.name;
+    drumThis.notes = drumPattern.notes;
+    drumThis.wordsInHeader = 22;
+    
+    drumThis.getPatternFromUI = getPatternFromUI;
+
+    drumThis.int16ToBase64Converter = ConstructInt16ToBase64Converter();
+
+    drumThis.soundSrc = drumThis.int16ToBase64Converter.convert(drumThis.buildMeasure());
+    drumThis.player1 = new Audio(drumThis.soundSrc);
+    drumThis.player2 = new Audio(drumThis.soundSrc);
+    drumThis.audioObject = drumThis.player1;
+    drumThis.currentPlayer = 1;
+    
+    drumThis.patternChanged = false;
 }
 
 Drum.prototype.changeDrumPattern = function (drumPattern) {
     
-    //this.beatsPerMinute / this.beatsPerMeasure
-    this.beatsPerMinute = drumPattern.beatsPerMinute;
-    this.beatsPerMeasure = drumPattern.beatsPerMeasure;
-    this.name = drumPattern.name;
-    this.notes = drumPattern.notes;
+    //drumThis.beatsPerMinute / drumThis.beatsPerMeasure
+    drumThis.beatsPerMinute = drumPattern.beatsPerMinute;
+    drumThis.beatsPerMeasure = drumPattern.beatsPerMeasure;
+    drumThis.name = drumPattern.name;
+    drumThis.notes = drumPattern.notes;
 
-    this.soundSrc = this.int16ToBase64Converter.convert(this.buildMeasure());
-    this.player1 = new Audio(this.soundSrc);
-    this.player2 = new Audio(this.soundSrc);
-    this.audioObject = this.player1;
-    this.currentPlayer = 1;
+    drumThis.soundSrc = drumThis.int16ToBase64Converter.convert(drumThis.buildMeasure());
+    drumThis.player1 = new Audio(drumThis.soundSrc);
+    drumThis.player2 = new Audio(drumThis.soundSrc);
+    drumThis.audioObject = drumThis.player1;
+    drumThis.currentPlayer = 1;
     
-    this.patternChanged = false;
+    drumThis.patternChanged = false;
     
-    drumThis = this;
+    //drumThis = this;
 }
 
 Drum.prototype.markPatternChanged = function() {
-    this.patternChanged = true;
+    drumThis.patternChanged = true;
 }
 
 // See: http://stackoverflow.com/a/25938297
@@ -66,21 +68,46 @@ Drum.prototype.loopIt = function () {
     }
 
     drumThis.audioObject.play();
+    
+    if (typeof(drumThis.changeDrumPattern) == "function"){
+        setTimeout(drumThis.reloadPattern, drumThis.getDuration() - 200);
+    }
 
     setTimeout(drumThis.loopIt, drumThis.getDuration());
 }
 
-Drum.prototype.start = function () {
-    this.isPlaying = true;
-    this.loopIt();
+Drum.prototype.reloadPattern = function() {
+    if (typeof(drumThis.getPatternFromUI) == "function" && drumThis.patternChanged) {
+        drumThis.changeDrumPattern(drumThis.getPatternFromUI());
+    }
+}
+
+Drum.prototype.start = function(event) {
+    if (typeof(drumThis.getPatternFromUI) == "function" && drumThis.patternChanged) {
+        new Promise(
+            function (resolve, reject) {
+                drumThis.changeDrumPattern(drumThis.getPatternFromUI());
+                resolve("OK");
+            }).then(
+                function (value) {
+                    drumThis.dostart();
+                });
+    } else {
+        drumThis.dostart();
+    }
+}
+
+Drum.prototype.dostart = function () {
+    drumThis.isPlaying = true;
+    drumThis.loopIt();
 }
 
 Drum.prototype.stop = function () {
-    this.isPlaying = false;
-    this.audioObject.pause();
-    this.audioObject.currentTime = 0;
-    this.audioObject = this.player1;
-    this.currentPlayer = 1;
+    drumThis.isPlaying = false;
+    drumThis.audioObject.pause();
+    drumThis.audioObject.currentTime = 0;
+    drumThis.audioObject = drumThis.player1;
+    drumThis.currentPlayer = 1;
 }
 
 Drum.prototype.loadDecodedDrumSounds = function (drumSounds) {
@@ -98,14 +125,14 @@ Drum.prototype.loadDecodedDrumSounds = function (drumSounds) {
 
 Drum.prototype.drumSoundForRow = function (id) {
     var fields = id.split("_");
-    return this.decodedDrumSounds[fields[0]];
+    return drumThis.decodedDrumSounds[fields[0]];
 }
 
 Drum.prototype.mixDrumSoundOnMeasure = function (id, measure) {
-    var drumSound = this.drumSoundForRow(id);
-    var offset = drumSound.frameOffset + this.frameForId(id);
+    var drumSound = drumThis.drumSoundForRow(id);
+    var offset = drumSound.frameOffset + drumThis.frameForId(id);
     var initalMeasureLength = measure.length;
-    for (var i = this.wordsInHeader; i < drumSound.data.length; i++) {
+    for (var i = drumThis.wordsInHeader; i < drumSound.data.length; i++) {
         if (offset + i >= initalMeasureLength)
             measure[offset + i] = drumSound.data[i];
         else
@@ -114,16 +141,16 @@ Drum.prototype.mixDrumSoundOnMeasure = function (id, measure) {
 }
 
 Drum.prototype.addDrumSoundsToMeasure = function (measure, beatsPerMeasure) {
-    var notes = this.notes;
+    var notes = drumThis.notes;
     for (var i = 0; i < notes.length; i++) {
-        this.mixDrumSoundOnMeasure(notes[i], measure);
+        drumThis.mixDrumSoundOnMeasure(notes[i], measure);
     }
 }
 
 Drum.prototype.limitVolume = function (sound) {
     var maxSoFar = 0;
 
-    for (var i = this.wordsInHeader; i < sound.length; i++) {
+    for (var i = drumThis.wordsInHeader; i < sound.length; i++) {
         maxSoFar = Math.max(maxSoFar, Math.abs(sound[i]));
     }
 
@@ -133,7 +160,7 @@ Drum.prototype.limitVolume = function (sound) {
 
     var scalingFactor = 32767 / maxSoFar;
 
-    for (var i = this.wordsInHeader; i < sound.length; i++) {
+    for (var i = drumThis.wordsInHeader; i < sound.length; i++) {
         sound[i] *= scalingFactor;
     }
 }
@@ -147,15 +174,15 @@ Drum.prototype.convertBeatToFrame = function (beat, framesPerSecond, beatsPerMin
 }
 
 Drum.prototype.framesPerMeasure = function (beatsPerMeasure) {
-    return this.convertBeatToFrame(beatsPerMeasure, this.framesPerSecond, this.beatsPerMinute);
+    return drumThis.convertBeatToFrame(beatsPerMeasure, drumThis.framesPerSecond, drumThis.beatsPerMinute);
 }
 
 Drum.prototype.initializeMeasure = function (beatsPerMeasure) {
 
-    var measure = this.makeHeader();
-    var indexAfterLastFrame = this.wordsInHeader + this.framesPerMeasure(beatsPerMeasure);
+    var measure = drumThis.makeHeader();
+    var indexAfterLastFrame = drumThis.wordsInHeader + drumThis.framesPerMeasure(beatsPerMeasure);
 
-    for (var i = this.wordsInHeader; i < indexAfterLastFrame; i++) {
+    for (var i = drumThis.wordsInHeader; i < indexAfterLastFrame; i++) {
         measure.push(0);
     }
 
@@ -168,24 +195,24 @@ Drum.prototype.fractionalBeat = function (beat, note, noteDenominator) {
 
 Drum.prototype.frameForId = function (id) {
     var numbers = id.split("_");
-    var number = this.convertBeatToFrame(
-        this.fractionalBeat(parseInt(numbers[1]), parseInt(numbers[2]), parseInt(numbers[3])),
-        this.framesPerSecond,
-        this.beatsPerMinute);
+    var number = drumThis.convertBeatToFrame(
+        drumThis.fractionalBeat(parseInt(numbers[1]), parseInt(numbers[2]), parseInt(numbers[3])),
+        drumThis.framesPerSecond,
+        drumThis.beatsPerMinute);
     return number;
 }
 
 Drum.prototype.buildMeasure = function () {
-    var beatsPerMeasure = this.beatsPerMeasure;
-    var measure = this.initializeMeasure(beatsPerMeasure);
-    this.addDrumSoundsToMeasure(measure, beatsPerMeasure);
-    this.limitVolume(measure);
-    emplaceUInt32(2 * (measure.length - this.wordsInHeader), 20, measure);
+    var beatsPerMeasure = drumThis.beatsPerMeasure;
+    var measure = drumThis.initializeMeasure(beatsPerMeasure);
+    drumThis.addDrumSoundsToMeasure(measure, beatsPerMeasure);
+    drumThis.limitVolume(measure);
+    emplaceUInt32(2 * (measure.length - drumThis.wordsInHeader), 20, measure);
     return measure;
 }
 
 Drum.prototype.getDuration = function () {
-    return (60 / (this.beatsPerMinute / this.beatsPerMeasure)) * 1000;
+    return (60 / (drumThis.beatsPerMinute / drumThis.beatsPerMeasure)) * 1000;
 }
 
 

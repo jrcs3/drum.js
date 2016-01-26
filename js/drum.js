@@ -4,7 +4,7 @@
 // Issue: This must be a singleton until I find a better work around.
 var drumThis;
 
-var Drum = function (drumSounds, drumPattern, getPatternFromUI) {
+var Drum = function (drumSounds, drumPattern, getPatternFromUI, notifyPlayerChanged) {
     drumThis = this;
 
     drumThis.decodedDrumSounds = drumThis.loadDecodedDrumSounds(drumSounds);
@@ -17,6 +17,7 @@ var Drum = function (drumSounds, drumPattern, getPatternFromUI) {
     drumThis.wordsInHeader = 22;
     
     drumThis.getPatternFromUI = getPatternFromUI;
+    drumThis.notifyPlayerChanged = notifyPlayerChanged;
 
     drumThis.int16ToBase64Converter = ConstructInt16ToBase64Converter();
 
@@ -44,6 +45,7 @@ Drum.prototype.changeDrumPattern = function (drumPattern) {
     drumThis.currentPlayer = 1;
     
     drumThis.patternChanged = false;
+    drumThis.didPromise = false;
     
     //drumThis = this;
 }
@@ -72,6 +74,11 @@ Drum.prototype.loopIt = function () {
     if (typeof(drumThis.changeDrumPattern) == "function"){
         setTimeout(drumThis.reloadPattern, drumThis.getDuration() - 200);
     }
+    
+    if (typeof(drumThis.notifyPlayerChanged) == "function") {
+        var playerInfo = drumThis.currentPlayer.toString() + " " + (drumThis.didPromise ? "Promised": "Not");
+        drumThis.notifyPlayerChanged(playerInfo);
+    }
 
     setTimeout(drumThis.loopIt, drumThis.getDuration());
 }
@@ -90,9 +97,11 @@ Drum.prototype.start = function(event) {
                 resolve("OK");
             }).then(
                 function (value) {
+                    drumThis.didPromise = true;
                     drumThis.dostart();
                 });
     } else {
+        drumThis.didPromise = false;
         drumThis.dostart();
     }
 }
